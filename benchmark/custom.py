@@ -54,20 +54,21 @@ for i in f:
     name = str(i).strip()
     if(len(name) <= 1):
         continue
-    I0 = cv2.imread(path + name + '/im1.png')
-    I1 = cv2.imread(path + name + '/im2.png')
-    I2 = cv2.imread(path + name + '/im3.png') # BGR -> RBG
+    I0 = cv2.imread(path + '/' + name + '/im1.png')
+    I1 = cv2.imread(path + '/' + name + '/im2.png')
+    I2 = cv2.imread(path + '/' + name + '/im3.png') # BGR -> RBG
     I0 = (torch.tensor(I0.transpose(2, 0, 1)).cuda() / 255.).unsqueeze(0)
     I2 = (torch.tensor(I2.transpose(2, 0, 1)).cuda() / 255.).unsqueeze(0)
     mid = model.inference(I0, I2, TTA=TTA, fast_TTA=TTA)[0]
-    cv2.imwrite(path + name + '/o2.png', (mid * 255).astype(np.uint8))
+    mid_np = mid.detach().cpu().numpy().transpose(1, 2, 0) 
     ssim = ssim_matlab(torch.tensor(I1.transpose(2, 0, 1)).cuda().unsqueeze(0) / 255., mid.unsqueeze(0)).detach().cpu().numpy()
-    mid = mid.detach().cpu().numpy().transpose(1, 2, 0) 
     I1 = I1 / 255.
-    psnr = -10 * math.log10(((I1 - mid) * (I1 - mid)).mean())
+    psnr = -10 * math.log10(((I1 - mid_np) * (I1 - mid_np)).mean())
     psnr_list.append(psnr)
     ssim_list.append(ssim)
     it_time.append(time.time() - start_time)
+    cv2.imwrite(f"{path}/{name}/{name}_output.png", (mid_np * 255).astype(np.uint8))
+    
     print("Avg PSNR: {} SSIM: {}".format(np.mean(psnr_list), np.mean(ssim_list)))
 
 print("Avg time:", sum(it_time)/len(it_time))
