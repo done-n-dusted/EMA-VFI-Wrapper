@@ -7,6 +7,7 @@ import argparse
 import os
 import warnings
 from tqdm import tqdm
+import time
 warnings.filterwarnings('ignore')
 torch.set_grad_enabled(False)
 
@@ -47,7 +48,8 @@ print(f'=========================Starting testing=========================')
 print(f'Dataset: Custom   Model: {model.name}   TTA: {TTA}')
 path = args.path
 f = open(path + '/testlist.txt', 'r')
-psnr_list, ssim_list = [], []
+psnr_list, ssim_list, it_time = [], [], []
+start_time = time.time()
 for i in f:
     name = str(i).strip()
     if(len(name) <= 1):
@@ -65,5 +67,7 @@ for i in f:
     psnr = -10 * math.log10(((I1 - mid) * (I1 - mid)).mean())
     psnr_list.append(psnr)
     ssim_list.append(ssim)
-
+    it_time.append(time.time() - start_time)
     print("Avg PSNR: {} SSIM: {}".format(np.mean(psnr_list), np.mean(ssim_list)))
+
+print("Avg time:", sum(it_time)/len(it_time))
